@@ -1,0 +1,17 @@
+{
+  "name": "authAPI",
+  "version": "0.0.0",
+  "description": "Test API authentication server",
+  "main": "server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Jason Bennett",
+  "license": "BSD-2-Clause",
+  "dependencies": {
+    "jwt-simple": "~0.2.0",
+    "morgan": "~1.5.2",
+    "express": "~4.12.3",
+    "body-parser": "~1.12.2"
+  }
+}
