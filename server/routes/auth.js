@@ -13,6 +13,7 @@ var auth = {
                 "message": "Invalid credentials"
             });
             return;
+        }
 
         // Fire a query to your DB and check if the credentials are valid
         var dbUserObj = auth.validate(username, password);
@@ -32,9 +33,7 @@ var auth = {
  
             res.json(genToken(dbUserObj));
         }
-
     },
-
     validate: function(username, password) {
         // spoofing the DB response for simplicity
         var dbUserObj = {

@@ -17,6 +17,6 @@ router.get('/api/v1/products', products.getAll);
 router.get('/api/v1/product/:id', products.getOne);
 router.post('/api/v1/product/', products.create);
 router.put('/api/v1/product/:id', products.update);
-router.delete('/api/v1/admin/user/:id, user.delete);
+router.delete('/api/v1/admin/user/:id', user.delete);
 
 module.exports = router;
