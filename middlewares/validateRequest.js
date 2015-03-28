@@ -1,8 +1,10 @@
 var jwt = require('jwt-simple');
-var validateUser = require('../routes/auth').validateUser;
+var userValidatingLib = require('../routes/auth.js');
 
-module.exports = function(req, res, next) {
+function validateUser(mongoose) {
+    var validateUser = (new userValidatingLib(mongoose)).validateUser;
 
+    this.validateUser = function(req, res, next) {
     // When performing a cross domain request, you will recieve
     // a preflighted request first.  This is to check if the app
     // is safe.
@@ -67,4 +69,7 @@ module.exports = function(req, res, next) {
         });
         return;
     }
+    }
 };
+
+module.exports = validateUser;

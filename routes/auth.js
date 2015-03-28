@@ -1,7 +1,23 @@
-var jwt = require('jwt-simple');
+var auth = function(mongoose) {
+    var jwt = require('jwt-simple');
+    var settings = require('../config');
 
-var auth = {
+    function checkForMasterUser(username, password) {
+        // Master user (so we can add stuff from the start)
+        if (username === "root" && password === "t0mc@t") {
+            var dbUserObj = {
+                name: 'root',
+                role: 'admin',
+                username: 'Jason.Bennett'
+            }
+            return dbUserObj;
+        } else {
+            return null;
+        }
+    }
 
+
+    return {
     login: function(req, res) {
         var username = req.body.username || '';
         var password = req.body.password || '';
@@ -35,27 +51,38 @@ var auth = {
         }
     },
     validate: function(username, password) {
-        // spoofing the DB response for simplicity
-        var dbUserObj = {
-            name: 'arvind',
-            role: 'admin',
-            username: 'arvind@myapp.com'
-        };
+        mongoose.connect(settings.mongodb);
+        var db = mongoose.connection
+        ,   dbUserObj = checkForMasterUser(username, password);
+
+        if (dbUserObj) {
+            return dbUserObj;
+        }
+
+        db.on('error', console.error.bind(console, 'connection error:'));
+        db.once('open', function (callback) {
+            
+        });
 
         return dbUserObj;
     },
 
     validateUser: function(username) {
-        // spoofing the DB response for simplicity
-        var dbUserObj = {
-            name: 'arvind',
-            role: 'admin',
-            username: 'arvind@myapp.com'
-        };
+        // Master user (so we can add stuff from the start)
+        if (username === "root" && password === "t0mc@t") {
+            var dbUserObj = {
+                name: 'root',
+                role: 'admin',
+                username: 'Jason.Bennett'
+        }
+
+        // TODO: Add check for user privledges
 
         return dbUserObj;
-    },
+    }
   }
+    }
+}
 
 // private method
 function genToken(user) {
