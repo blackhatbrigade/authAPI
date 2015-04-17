@@ -1,10 +1,10 @@
 var jwt = require('jwt-simple');
 var userValidatingLib = require('../routes/auth.js');
 
-function validateUser(mongoose) {
-    var validateUser = (new userValidatingLib(mongoose)).validateUser;
+function validateUser(mongoose, config) {
+  var validateUser = (new userValidatingLib(mongoose, config)).validateUser;
 
-    this.validateUser = function(req, res, next) {
+  this.validateUser = function (req, res, next) {
     // When performing a cross domain request, you will recieve
     // a preflighted request first.  This is to check if the app
     // is safe.
@@ -16,60 +16,60 @@ function validateUser(mongoose) {
     var key = (req.body && req.body.x_key) || (req.query && req.query.x_key) || req.headers['x-key'];
 
     if (token || key) {
-        try {
-            var decoded = jwt.decode(token, require('../config/secret.js')());
+      try {
+        var decoded = jwt.decode(token, require('../config/secret.js')());
 
-            if (decoded.exp <= Date.now()) {
-                res.status(400);
-                res.json({
-                    "status": 400,
-                    "message": "Token Expired"
-                });
-                return;
-            }
-
-            // Authorize the user to see if s/he can access our resources
-            
-            var dbUser = validateUser(key);
-            if (dbUser) {
-
-                if ((req.url.indexOf('admin') >= 0 && dbUser.role == 'admin') || (req.url.indexOf('admin') < 0 && req.url.indexOf('/api/v1/') >= 0)) {
-                    next();
-                } else {
-                    res.status(403);
-                    res.json({
-                        "status": 403,
-                        "message": "Not Authorized"
-                    });
-                    return;
-                }
-            } else {
-                // No user with this name exists, respond back with a 401
-                res.status(401);
-                res.json({
-                    "status": 401,
-                    "message": "Invalid User"
-                });
-                return;
-            }
-
-        } catch (err) {
-            res.status(500);
-            res.json({
-                "status": 500,
-                "message": "Oops something went wrong",
-                "error": err
-            });
+        if (decoded.exp <= Date.now()) {
+          res.status(400);
+          res.json({
+            "status": 400,
+            "message": "Token Expired"
+          });
+          return;
         }
-    } else {
-        res.status(401);
-        res.json({
+
+        // Authorize the user to see if s/he can access our resources
+        var dbUser = validateUser(key);
+        if (dbUser) {
+
+          if ((req.url.indexOf('admin') >= 0 && dbUser.role == 'admin') || (req.url.indexOf('admin') < 0 && req.url.indexOf('/api/v1/') >= 0)) {
+            next();
+          } else {
+            res.status(403);
+            res.json({
+              "status": 403,
+              "message": "Not Authorized"
+            });
+            return;
+          }
+        } else {
+          // No user with this name exists, respond back with a 401
+          res.status(401);
+          res.json({
             "status": 401,
-            "message": "Invalid Token or Key"
+            "message": "Invalid User"
+          });
+          return;
+        }
+
+      } catch (err) {
+        res.status(500);
+        res.json({
+          "status": 500,
+          "message": "Oops something went wrong",
+          "error": err
         });
-        return;
+      }
+    } else {
+      res.status(401);
+      res.json({
+        "status": 401,
+        "message": "Invalid Token or Key"
+      });
+      return;
     }
-    }
-};
+  }
+}
+;
 
 module.exports = validateUser;

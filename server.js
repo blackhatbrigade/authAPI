@@ -3,8 +3,17 @@ var path = require('path');
 var logger = require('morgan');
 var bodyParser = require('body-parser');
 var mongoose = require('mongoose');
-
 var app = express();
+var router = require('./routes');
+
+// Spoolup for API services
+var configuration = require('./config');
+var validationModule = new (require('./middlewares/validateRequest.js'))(mongoose, configuration);
+var authModule = new (require('./routes/auth'))(mongoose, configuration);
+var routes = new router(
+    app,
+    authModule);
+var users;
 
 app.use(logger('dev'));
 app.use(bodyParser.json());
@@ -26,9 +35,11 @@ app.all('/*', function(req, res, next) {
 // Only the requests that start with /api/v1/* will be checked for the token.
 // Any URL's that do not follow the below pattern should be avoided unless you
 // are sure that authentication is not needed.
-app.all('/api/v1/*', [require('./middlewares/validateRequest')]);
+app.all('/api/v1/*', validationModule.validateUser);
 
-app.use('/', require('./routes'));
+routes.getRoutes();
+//app.use('/', routes.getRoutes);
+console.log("back in server.js");
 
 // If no route is matched by now, it must be a 404
 app.use(function(req, res, next) {

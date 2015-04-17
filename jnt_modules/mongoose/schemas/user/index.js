@@ -1,9 +1,11 @@
-var mongoose = require('mongoose');
-var Schema = mongoose.Schema;
-
-module.exports = new Schema({
+function userSchema(mongoose) {
+  var Schema = mongoose.Schema;
+  return new Schema({
     username: String,
     password: String,
-    access: String,
+    role: String,
     dateCreated: Date
 });
+}
+
+module.exports = userSchema;
