@@ -1,4 +1,22 @@
-var auth = function (mongoose, config) {
+/**
+ * Object that handles user authorization against DB.
+ */
+var auth = function (dependencies) {
+  /**
+   * App mongoose instance.
+   */
+  var mongoose = dependencies.getDB();
+
+  /**
+   * App Logger instance.
+   */
+  var logger = dependencies.getLogger();
+
+  /**
+   * App config data.
+   */
+  var config = dependencies.getConfig();
+
   var jwt = require('jwt-simple');
   var self = this;
   var userSchema = require('../jnt_modules/mongoose/schemas/user');
@@ -40,8 +58,8 @@ var auth = function (mongoose, config) {
     var userSchemaObj = new userSchema(mongoose);
     var userModel = mongoose.model('user', userSchemaObj);
 
-    var db = mongoose.connection
-        , dbUserObj = checkForMasterUser(username, password);
+    var db = mongoose.connection;
+    var dbUserObj = checkForMasterUser(username, password);
 
     if (dbUserObj === null) {
 
@@ -52,7 +70,7 @@ var auth = function (mongoose, config) {
         });
       });
     }
-    return null;
+    return dbUserObj;
   }
 
   function validateUser(username) {
@@ -70,14 +88,21 @@ var auth = function (mongoose, config) {
     }
   }
 
+  /**
+   * Function to validate a token against mongo.
+   */
+  function validateKey(key) {
+
+  }
+
   return {
     /**
      * Main entry function for login
      */
     login: function (req, res) {
-      var username = req.body.username || '';
-      var password = req.body.password || '';
-      console.log(req.body);
+      var username = req.query.username || '';
+      var password = req.query.password || '';
+
       if (username == '' || password == '') {
         res.status(401);
         res.json({
@@ -105,7 +130,8 @@ var auth = function (mongoose, config) {
 
         res.json(genToken(dbUserObj));
       }
-    }
+    },
+    validateKey: validateKey
   };
 };
 

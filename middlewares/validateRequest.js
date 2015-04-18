@@ -1,8 +1,19 @@
 var jwt = require('jwt-simple');
 var userValidatingLib = require('../routes/auth.js');
 
-function validateUser(mongoose, config) {
-  var validateUser = (new userValidatingLib(mongoose, config)).validateUser;
+/**
+ * Manages User Validation.
+ */
+function validateUser(dependencies, authModule) {
+  /**
+   * Connection to Mongo.
+   */
+  var mongoose = dependencies.getDB();
+
+  /**
+   * Logger for app.
+   */
+  var logger = dependencies.getLogger();
 
   this.validateUser = function (req, res, next) {
     // When performing a cross domain request, you will recieve
@@ -29,7 +40,10 @@ function validateUser(mongoose, config) {
         }
 
         // Authorize the user to see if s/he can access our resources
-        var dbUser = validateUser(key);
+        // This will require having a function that checks mongo for
+        // a active key with the given value.
+        var dbUser = authModule.validateKey(key);
+        logger.info('Got user validation details', dbUser);
         if (dbUser) {
 
           if ((req.url.indexOf('admin') >= 0 && dbUser.role == 'admin') || (req.url.indexOf('admin') < 0 && req.url.indexOf('/api/v1/') >= 0)) {

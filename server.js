@@ -1,21 +1,42 @@
 var express = require('express');
 var path = require('path');
-var logger = require('morgan');
 var bodyParser = require('body-parser');
-var mongoose = require('mongoose');
 var app = express();
+var dep = require('./config/dependencies');
 var router = require('./routes');
 
 // Spoolup for API services
-var configuration = require('./config');
-var validationModule = new (require('./middlewares/validateRequest.js'))(mongoose, configuration);
-var authModule = new (require('./routes/auth'))(mongoose, configuration);
-var routes = new router(
-    app,
-    authModule);
-var users;
 
-app.use(logger('dev'));
+/**
+ * Handles all dependencies needed by app modules.
+ */
+var dependencies = new dep();
+
+/**
+ * Authorization module for users.
+ */
+var authModule = new (require('./routes/auth.js'))(dependencies);
+
+/**
+ * Module that handles validation of users.
+ */
+var validationModule = new (require('./middlewares/validateRequest.js'))(dependencies, authModule);
+
+/**
+ * User manipulation.
+ */
+var users = new (require('./routes/users.js'))(dependencies);
+
+/**
+ * Main routes definition.
+ */
+var routes = new router(dependencies, authModule, users);
+
+/**
+ * Application logger.
+ */
+var logger = dependencies.getLogger();
+
 app.use(bodyParser.json());
 
 app.all('/*', function(req, res, next) {
@@ -37,15 +58,15 @@ app.all('/*', function(req, res, next) {
 // are sure that authentication is not needed.
 app.all('/api/v1/*', validationModule.validateUser);
 
-routes.getRoutes();
-//app.use('/', routes.getRoutes);
-console.log("back in server.js");
+//routes.getRoutes();
+app.use('/', routes.getRoutes());
 
 // If no route is matched by now, it must be a 404
 app.use(function(req, res, next) {
-  var err = new Error('Not Found');
-  err.status = 404;
-  next(err);
+  logger.info('Invalid endpoint hit: ' + req.originalUrl);
+  res.status = 404;
+  res.json({'message': 'Not Found'});
+  next();
 });
 
 // Start the server
