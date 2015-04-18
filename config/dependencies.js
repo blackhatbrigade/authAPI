@@ -23,9 +23,22 @@ function dependencies() {
   var config = require('../config');
 
   /**
+   * Starting up mongo connection.
+   */
+  var mongoConn = mongoose.createConnection('mongodb://localhost:27017/api');
+  mongoConn.on('connected', function() {
+    log.info('Connected to MongoDB');
+
+    mongoConn.on('close', function() {
+      log('Connection to MongoDB closed');
+    });
+  });
+
+  /**
    * Accessor function for retreiving mongoose instance.
    */
   function getDB() {
+    //mongoose.mongoConnect('mongodb://localhost:27017/api');
     return mongoose;
   }
 
