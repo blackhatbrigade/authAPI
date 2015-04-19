@@ -32,6 +32,8 @@ var users = new (require('./routes/users.js'))(dependencies);
  */
 var routes = new router(dependencies, authModule, users);
 
+var config = dependencies.getConfig();
+
 /**
  * Application logger.
  */
@@ -71,7 +73,7 @@ app.use(function(req, res, next) {
 });
 
 // Start the server
-app.set('port', process.env.PORT || 4000);
+app.set('port', config.port);
 
 var server = app.listen(app.get('port'), function() {
   console.log('Express server listening on port ' + server.address().port);

@@ -30,7 +30,7 @@ function dependencies() {
   /**
    * Starting up mongo connection.
    */
-  var mongoConn = mongoose.createConnection('mongodb://localhost:27017/api');
+  var mongoConn = mongoose.createConnection(config.mongodb);
   mongoConn.on('connected', function() {
     log.info('Connected to MongoDB');
 

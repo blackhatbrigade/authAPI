@@ -16,6 +16,7 @@ module.exports = function() {
   var mongoFullAddress = 'mongodb://' + mongoUser + ':' + mongoPass + '@' + mongoAddress + ':' + mongoPort + '/' + mongoDb;
 
   return {
-    mongodb: mongoFullAddress
+    mongodb: mongoFullAddress,
+    nodePort: port
   };
 }();
