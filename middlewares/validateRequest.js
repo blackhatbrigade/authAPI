@@ -27,11 +27,7 @@ function validateUser(dependencies, authModule) {
     var key = (req.body && req.body.x_key) || (req.query && req.query.x_key) || req.headers['x-key'];
 
     if (token || key) {
-      try {
-        var decoded = jwt.decode(token, require('../config/secret.js')());
-
-        if (decoded.exp <= Date.now()) {
-          res.status(400);
+      try { var decoded = jwt.decode(token, require('../config/secret.js')()); if (decoded.exp <= Date.now()) { res.status(400);
           res.json({
             "status": 400,
             "message": "Token Expired"
@@ -42,31 +38,42 @@ function validateUser(dependencies, authModule) {
         // Authorize the user to see if s/he can access our resources
         // This will require having a function that checks mongo for
         // a active key with the given value.
-        var dbUser = authModule.validateKey(key);
-        logger.info('Got user validation details', dbUser);
-        if (dbUser) {
+        authModule.validateKey(token).then(function(dbUser) {
+          if (dbUser) {
 
-          if ((req.url.indexOf('admin') >= 0 && dbUser.role == 'admin') || (req.url.indexOf('admin') < 0 && req.url.indexOf('/api/v1/') >= 0)) {
-            next();
+            // Checking if the user has the appropriate roles for the action requested.
+            // Sloppy as fuck
+            if (
+                (req.url.indexOf('admin') >= 0 && dbUser.role == 'admin') ||
+                (req.url.indexOf('admin') < 0 && req.url.indexOf('/api/v1/') >= 0)) {
+              next();
+              return;
+            } else {
+              res.status(403);
+              res.json({
+                "status": 403,
+                "message": "Not Authorized"
+              });
+              return;
+            }
           } else {
-            res.status(403);
+            // No user with this name exists, respond back with a 401
+            res.status(401);
             res.json({
-              "status": 403,
-              "message": "Not Authorized"
+              "status": 401,
+              "message": "Invalid User"
             });
             return;
           }
-        } else {
-          // No user with this name exists, respond back with a 401
-          res.status(401);
-          res.json({
-            "status": 401,
-            "message": "Invalid User"
-          });
-          return;
-        }
 
+        res.json({
+          "status": 401,
+          "message": "Invalid Token or Key"
+        });
+        return;
+      });
       } catch (err) {
+        logger.error(err);
         res.status(500);
         res.json({
           "status": 500,
@@ -74,14 +81,9 @@ function validateUser(dependencies, authModule) {
           "error": err
         });
       }
-    } else {
-      res.status(401);
-      res.json({
-        "status": 401,
-        "message": "Invalid Token or Key"
-      });
-      return;
-    }
+      } else {
+        res.status(401);
+      }
   }
 }
 ;

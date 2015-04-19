@@ -33,6 +33,9 @@ function routes(dependencies, auth, users) {
   routeArray.push(express.Router()
       .post('/api/v1/admin/user', users.create));
 
+  routeArray.push(express.Router()
+      .get('/api/v1/admin/user/:username', users.read));
+
   this.getRoutes = function () {
     //router.get('/api/v1/products', products.getAll);
     //router.get('/api/v1/product/:id', products.getOne);

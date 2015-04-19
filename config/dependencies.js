@@ -17,6 +17,11 @@ function dependencies() {
    */
   var log = logger.createLogger({name: 'API'});
 
+  /**
+   * Mongoose Interface for user data.
+   */
+  var userConn = new (require('../jnt_modules/mongoose/schemas/user'))(log);
+
   /*
    * App configuration.
    */
@@ -35,11 +40,17 @@ function dependencies() {
   });
 
   /**
+   * Mongoose Model for Users Data
+   */
+  console.log(userConn);
+  var Users = userConn.getUserModel(mongoConn);
+
+  /**
    * Accessor function for retreiving mongoose instance.
    */
   function getDB() {
     //mongoose.mongoConnect('mongodb://localhost:27017/api');
-    return mongoose;
+    return mongoConn;
   }
 
   /**
@@ -53,7 +64,12 @@ function dependencies() {
     return config;
   }
 
+  function getUsers() {
+    return Users;
+  }
+
   return {
+    getUsers: getUsers,
     getLogger: getLogger,
     getDB: getDB,
     getConfig: getConfig

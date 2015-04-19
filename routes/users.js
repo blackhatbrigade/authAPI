@@ -10,70 +10,65 @@ function users(dependencies) {
   /**
    * Main mongoose connector.
    */
-  var mongoose = dependencies.getDB();
+  var conn = dependencies.getDB();
 
-  /**
-   * Mongoose schema for users.
-   */
-  var userSchema = new (require('../jnt_modules/mongoose/schemas/user'))(mongoose);
+  var logger = dependencies.getLogger();
+
+  var Users = dependencies.getUsers();
 
   function create(req, res) {
-    logger.info('Caught request to create user');
-    var params = req.params;
-    var deferred = q.defer();
+    var params = req.body;
 
-    // Validation of parameters?
+    // Verify user has permission for this operation.
+
+    // Validation of parameters
 
     // Check if mongo already has user...
-    userSchema.find({ username: req.params.username }, function(err, data) {
-      console.log(data);
+    Users.findOne({ username: params.username }, function(err, data) {
       if (data) {
-        logger.info('User already exists', data);
-        deferred.resolve({'message': 'User exists, cannot create again'});
+        res.json({'message': 'User exists, cannot create again'});
       } else {
-        userSchema.username = req.params.username;
-        userSchema.password = req.params.password;
-        userSchema.role = req.params.role;
-        userSchema.dateCreated = new Date();
+        var newUser = new Users();
+        newUser.username = params.username;
+        newUser.password = params.password;
+        newUser.role = params.role;
+        newUser.dateCreated = new Date();
 
-        userSchema.save(function(err, data) {
+        newUser.save(function(err, data) {
           logger.info('Created user: ', data);
-          deferred.resolve(data);
+          res.json(data);
         });
       }
     });
+  }
 
-    res.json(deferred.promise);
-    res.status(200);
-    return;
+  function read(req, res) {
+    var deferred = q.defer();
+    
+    Users.find({"username": req.params.username}, function(err, record) {
+      if (err) {
+        logger.error(err);
+        res.json({});
+        return;
+      }
+      if (record.length > 0) {
+        res.json({
+          'username': record[0].username,
+          'role': record[0].role,
+          'dateCreated': record[0].dateCreated
+        });
+      } else {
+        res.json({
+          'status': 200,
+          'message': 'User not found'
+        });
+      }
+    });
   }
 
   return {
     create: create,
-
-    getAll: function(req, res) {
-        var allusers = data;
-        res.json(allusers);
-    },
-
-    getOne: function(req, res) {
-        var id = req.params.id;
-        var user = data[0];
-        res.json(user);
-    },
-
-    update: function(req, res) {
-        var updateuser = req.body;
-        var id = req.params.id;
-        data[id] = updateuser;
-        res.json(updateuser);
-    },
-
-    delete: function(req, res) {
-        var id = req.params.id;
-        data.splice(id, 1);
-        res.json(true);
-    }
+    read: read
   };
 };
 

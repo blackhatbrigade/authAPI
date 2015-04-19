@@ -38,6 +38,7 @@ var routes = new router(dependencies, authModule, users);
 var logger = dependencies.getLogger();
 
 app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({ extended: true }));
 
 app.all('/*', function(req, res, next) {
   // CORS headers
