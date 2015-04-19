@@ -73,8 +73,8 @@ app.use(function(req, res, next) {
 });
 
 // Start the server
-app.set('port', config.port);
+app.set('port', config.nodePort);
 
-var server = app.listen(app.get('port'), function() {
+var server = app.listen(config.nodePort, function() {
   console.log('Express server listening on port ' + server.address().port);
 });
