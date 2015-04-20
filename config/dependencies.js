@@ -60,10 +60,16 @@ function dependencies() {
     return log;
   }
 
+  /**
+   * Accessor function for retreiving app config.
+   */
   function getConfig() {
     return config;
   }
 
+  /**
+   * Accessor function for retreiving user manipulation object.
+   */
   function getUsers() {
     return Users;
   }

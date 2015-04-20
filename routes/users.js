@@ -1,5 +1,7 @@
 /**
  * Promises module.
+ * (Maybe user Bluebird?)
+ *
  */
 var q = require('q');
 
@@ -9,13 +11,30 @@ var q = require('q');
 function users(dependencies) {
   /**
    * Main mongoose connector.
+   *
+   * @property
    */
   var conn = dependencies.getDB();
 
+  /**
+   * Main App logger.
+   *
+   * @property
+   */
   var logger = dependencies.getLogger();
 
+  /**
+   * Mongoose Model for users.
+   *
+   * @property
+   */
   var Users = dependencies.getUsers();
 
+  /**
+   * Endpoint for creating Users.
+   *
+   * @method
+   */
   function create(req, res) {
     var params = req.body;
 
@@ -24,7 +43,7 @@ function users(dependencies) {
     // Validation of parameters
 
     // Check if mongo already has user...
-    Users.findOne({ username: params.username }, function(err, data) {
+    Users.findOne({ username: params.username }, 'username', function(err, data) {
       if (data) {
         res.json({'message': 'User exists, cannot create again'});
       } else {
@@ -42,10 +61,13 @@ function users(dependencies) {
     });
   }
 
+  /**
+   * Endpoint for reading a User.
+   *
+   * @method
+   */
   function read(req, res) {
-    var deferred = q.defer();
-    
-    Users.find({"username": req.params.username}, function(err, record) {
+    Users.find({"username": req.params.username}, 'username role dateCreated', function(err, record) {
       if (err) {
         logger.error(err);
         res.json({});
@@ -66,6 +88,9 @@ function users(dependencies) {
     });
   }
 
+  /**
+   * Exposed functionality.
+   */
   return {
     create: create,
     read: read

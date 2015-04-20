@@ -19,31 +19,50 @@ var auth = function (dependencies) {
 
   /**
    * User Helper Object.
+   *
+   * @property
    */
   var User = dependencies.getUsers();
 
   /**
    * App config data.
+   *
+   * @property
    */
   var config = dependencies.getConfig();
 
+  /**
+   * Magical encryption module?
+   *
+   * @property
+   */
   var jwt = require('jwt-simple');
+
+  /**
+   * Allows for keeping track of authModule scope.
+   *
+   * @property
+   */
   var self = this;
 
+  /**
+   * Generates a token and saves it to the user document in question.
+   *
+   * @method
+   */
   function genToken(userObj) {
-    var deferred = q.defer();
     var expires = expiresIn(7); // 7 days
     var token = jwt.encode({
       exp: expires
     }, require('../config/secret')());
 
-   userObj.token = token;
-   userObj.token_exp = expires;
-   userObj.save(function(err) {
-     if (err) {
-       logger.error('Error creating user', err);
-     }
-   });
+    userObj.token = token;
+    userObj.token_exp = expires;
+    userObj.save(function(err) {
+      if (err) {
+        logger.error('Error creating user', err);
+      }
+    });
 
     return {
       token: token,
@@ -52,19 +71,23 @@ var auth = function (dependencies) {
     };
   }
 
+  /**
+   * Convienence function for setting expire date.
+   *
+   * @method
+   */
   function expiresIn(numDays) {
     var dateObj = new Date();
     return dateObj.setDate(dateObj.getDate() + numDays);
   }
 
+  /**
+   * Allows for immediate use of the API (with master token)
+   */
   function checkForMasterUser(token) {
     // Master user (so we can add stuff from the start)
-    if (token === 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJleHAiOjE0MzAwNjQwNDAyODl9.w59nVHDE3eW3RRWmWD737yn_d2gekD7-e6RvcjCRwMg') {
-      var dbUserObj = new User({
-        name: 'Jason Bennett',
-        role: 'admin',
-        username: 'root'
-      });
+    if (token === config.masterToken) {
+      var dbUserObj = new User(config.masterUser);
       return dbUserObj;
     } else {
       return null;
@@ -72,7 +95,12 @@ var auth = function (dependencies) {
   }
 
   /**
-   * Validates username / password combinations
+   * Validates username / password combinations.
+   *
+   * This should just return a role, or at least not return
+   * the password.
+   *
+   * @method
    */
   function validate(username, password) {
     var deferred = q.defer();
@@ -92,13 +120,18 @@ var auth = function (dependencies) {
         }
       }
     });
-    
+
     return deferred.promise;
   }
 
+  /**
+   * Checks for authorization level for a user.
+   *
+   * @method
+   */
   function validateUser(username) {
     var deferred = q.defer();
-    User.findOne({"username": username}).then(function(err, record) {
+    User.findOne({"username": username}, 'role').then(function(err, record) {
       if (err) {
         logger.error('Error occured getting user information', err);
         deferred.reject('Internal System Error');
@@ -116,6 +149,8 @@ var auth = function (dependencies) {
 
   /**
    * Function to validate a token against mongo.
+   *
+   * @method
    */
   function validateKey(key) {
     var deferred = q.defer();
@@ -140,6 +175,11 @@ var auth = function (dependencies) {
     return deferred.promise;
   }
 
+  /**
+   * Helper function for building quick errors.
+   *
+   * @method
+   */
   function buildResponse(res, code, message) {
     logger.info('Failed Login');
     res.status(code);
@@ -149,33 +189,36 @@ var auth = function (dependencies) {
     });
   }
 
-  return {
-    /**
-     * Main entry function for login
-     */
-    login: function (req, res) {
-      var username = req.query.username || '';
-      var password = req.query.password || '';
+  /**
+   * Main entry function for login
+   *
+   * @method
+   */
+  function login(req, res) {
+    var username = req.query.username || '';
+    var password = req.query.password || '';
 
-      if (username == '' || password == '') {
-        buildResponse(res, 401, "Invalid credentials");
-        return;
-      }
+    if (username == '' || password == '') {
+      buildResponse(res, 401, "Invalid credentials");
+      return;
+    }
 
-      // Fire a query to your DB and check if the credentials are valid
-      validate(username, password).then(function(dbUserObj) {
+    // Fire a query to your DB and check if the credentials are valid
+    validate(username, password)
+      .then(function(dbUserObj) {
         if (!dbUserObj) {
           buildResponse(res, 401, "Invalid credentials");
         } else {
-          // If authentication is successfull, we will generate a token
-          // and dispatch it to the client
-
           res.status(200);
           res.json(genToken(dbUserObj));
         }
         return;
       });
-    },
+  }
+
+  // Exposed functions
+  return {
+    login: login,
     validateKey: validateKey
   };
 };
