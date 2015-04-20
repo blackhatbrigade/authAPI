@@ -75,6 +75,7 @@ app.use(function(req, res, next) {
 // Start the server
 app.set('port', config.nodePort);
 
+console.log('Attempting to setup nodejs on port', config.nodePort);
 var server = app.listen(config.nodePort, function() {
   console.log('Express server listening on port ' + server.address().port);
 });
