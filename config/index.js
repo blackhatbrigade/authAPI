@@ -1,5 +1,5 @@
 module.exports = function() {
-  var ipAddress = process.env.OPENSHIFT_NODEJS_IP;
+  var ipAddress = process.env.OPENSHIFT_NODEJS_IP || 127.0.0.1;
 
   var port = process.env.OPENSHIFT_NODEJS_PORT || 4000;
 
@@ -17,6 +17,7 @@ module.exports = function() {
 
   return {
     mongodb: mongoFullAddress,
-    nodePort: port
+    nodePort: port,
+    nodeIp: ipAddress
   };
 }();
