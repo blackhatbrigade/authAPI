@@ -44,6 +44,9 @@ function validateUser(dependencies, authModule) {
     return false;
   }
 
+  /**
+   * Validates a login attempt with a token.
+   */
   this.validateUser = function (req, res, next) {
     // When performing a cross domain request, you will recieve
     // a preflighted request first.  This is to check if the app
